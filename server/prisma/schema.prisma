@@ -1,13 +1,72 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "mongodb"
+}
+
+// Modelos para ECOMMERCE
+model Usuario {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  email    String  @unique
+  nombre   String?
+  role     Role    @default(USER)
+  password String
+  ordenes  Orden[]
+}
+
+model Producto {
+  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  nombre      String
+  descripcion String
+  publicar    Boolean        @default(true)
+  precio      Float          @default(0)
+  imagen      String         @default("image-not-found.jpg")
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @default(now()) @updatedAt
+  categorias  ProductoCategoria[]
+  ordenes     OrdenProducto[]
+}
+
+model Categoria {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  nombre    String
+  updatedAt DateTime  @default(now()) @updatedAt
+  productos ProductoCategoria[]
+}
+
+model Orden {
+  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  fechaOrden  DateTime       @default(now())
+  usuarioId   String         @db.ObjectId
+  usuario     Usuario        @relation(fields: [usuarioId], references: [id])
+  productos   OrdenProducto[]
+}
+
+model OrdenProducto {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  ordenId     String   @db.ObjectId
+  orden       Orden    @relation(fields: [ordenId], references: [id])
+  productoId  String   @db.ObjectId
+  producto    Producto @relation(fields: [productoId], references: [id])
+  cantidad    Int
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model ProductoCategoria {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  productoId  String   @db.ObjectId
+  producto    Producto @relation(fields: [productoId], references: [id])
+  categoriaId String   @db.ObjectId
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@unique([productoId, categoriaId])
 }
